@@ -15,11 +15,20 @@ class Database(object):
         self.con.commit()
 
     def sqlite_create_db(self):
-        # Для значений, который пользователь может выбирать из списка, но не создавать сам
+        # Карты (алгоритмы). Основное что-то, что движет логикой
         self.cur.execute(
             """
             CREATE TABLE IF NOT EXISTS maps(
                 map TEXT NOT NULL PRIMARY KEY
+            ) 
+            """)
+
+        # Настройки
+        self.cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS settings(
+                key TEXT NOT NULL PRIMARY KEY,
+                value TEXT NOT NULL
             ) 
             """)
 
@@ -38,26 +47,6 @@ class Database(object):
         #         ("lang", "en")
         #     """)
         pass
-
-    # def get_common_setting(self, key):
-    #     """Возвращает настройку по ключу.
-    #     Если настройка не найдена, возвращает None.
-    #     """
-    #
-    #     self.cur.execute(
-    #         f"""
-    #         SELECT
-    #             value
-    #         FROM
-    #             common_settings
-    #         WHERE
-    #             key = "{key}"
-    #         """)
-    #
-    #     try:
-    #         return self.cur.fetchone()["value"]
-    #     except TypeError:
-    #         return None
 
     def get_maps(self):
         request = f"""
@@ -80,6 +69,39 @@ class Database(object):
                 ("{map_name}")
             """)
         self.commit()
+
+    def set_setting(self, key, val):
+
+        self.cur.execute(
+            f"""
+            INSERT OR REPLACE INTO
+                settings
+            VALUES
+                ("{key}", "{val}")
+            """)
+
+        self.commit()
+
+    def get_setting(self, key):
+        """Возвращает настройку по ключу.
+        Если настройка не найдена, возвращает None.
+        """
+
+        self.cur.execute(
+            f"""
+            SELECT
+                value
+            FROM
+                settings
+            WHERE
+                key = "{key}"
+            """)
+
+        try:
+            return self.cur.fetchone()["value"]
+        except TypeError:
+            return None
+
 
 
 db = Database()

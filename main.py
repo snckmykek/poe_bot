@@ -4,10 +4,12 @@ Config.set('graphics', 'resizable', '1')
 Config.set('graphics', 'width', '1000')
 Config.set('graphics', 'height', '640')
 
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, BooleanProperty
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.tab import MDTabsBase
+
+from db_requests import db
 
 
 class MainScreen(MDBoxLayout):
@@ -20,17 +22,26 @@ class Tab(MDBoxLayout, MDTabsBase):
 
 
 class MainApp(MDApp):
-    current_map = StringProperty("Test")
+    current_map = StringProperty("")
     status = StringProperty("Остановлен")
+    is_active = BooleanProperty(False)
+
+    def __init__(self, **kwargs):
+        self.load_settings()
+        super(MainApp, self).__init__(**kwargs)
+
+    def load_settings(self):
+        self.current_map = db.get_setting("current_map")
 
     def build(self):
         self.theme_cls.theme_style = "Dark"
-        self.theme_cls.primary_palette = "Brown"
-
+        self.theme_cls.primary_palette = "Teal"
         return MainScreen()
 
     def set_current_location(self, current_location):
         self.current_map = current_location
+        self.status = "Остановлен"
+        db.set_setting("current_map", self.current_map)
 
     def change_status(self, new_status):
         self.status = new_status

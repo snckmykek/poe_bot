@@ -1,7 +1,9 @@
 #: import Settings1 settings.Settings1
+#: import Algorithm algorithm.Algorithm
 
 <MainScreen>:
     orientation: "vertical"
+    md_bg_color: app.theme_cls.bg_light
 
     MDToolbar:
         title: "{}. {}".format(app.current_map, app.status)
@@ -13,8 +15,7 @@
         Tab:
             title: "Основная"
 
-            Label:
-                text: "Основная"
+            Algorithm:
 
         Tab:
             title: "Логи"
