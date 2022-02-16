@@ -1,6 +1,8 @@
 import sqlite3
 from datetime import datetime
 
+from kivymd.app import MDApp
+
 
 class Database(object):
 
@@ -29,6 +31,31 @@ class Database(object):
             CREATE TABLE IF NOT EXISTS settings(
                 key TEXT NOT NULL PRIMARY KEY,
                 value TEXT NOT NULL
+            ) 
+            """)
+
+        # Настройки карты
+        self.cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS map_settings(
+                key TEXT NOT NULL PRIMARY KEY,
+                value TEXT NOT NULL,
+                frequency FLOAT DEFAULT 0,
+                active BOOL NOT NULL DEFAULT False,
+                type TEXT NOT NULL
+            ) 
+            """)
+
+        # Скрипты для повторяющихся дествий
+        self.cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS repetitive_actions(
+                key TEXT NOT NULL PRIMARY KEY,
+                map TEXT NOT NULL,
+                name TEXT NOT NULL,
+                frequency FLOAT DEFAULT 0,
+                active BOOL NOT NULL DEFAULT False,
+                script TEXT DEFAULT ""
             ) 
             """)
 
@@ -102,6 +129,51 @@ class Database(object):
         except TypeError:
             return None
 
+    def set_rep_act(self, key, name="", frequency=0, active=False, script=""):
+        self.cur.execute(
+            f"""
+            INSERT OR REPLACE INTO
+                repetitive_actions
+            VALUES
+                ("{key}", "{MDApp.get_running_app().current_map}", "{name}", {frequency}, {active}, "{script}")
+            """)
+        self.commit()
+
+    def get_rep_acts(self):
+        request = f"""
+                SELECT
+                    repetitive_actions.key,
+                    repetitive_actions.name,
+                    repetitive_actions.frequency,
+                    repetitive_actions.active,
+                    repetitive_actions.script
+                FROM
+                    repetitive_actions
+                WHERE
+                    repetitive_actions.map = "{MDApp.get_running_app().current_map}"
+                """
+
+        self.cur.execute(request)
+
+        return self.cur.fetchall()
+
+    def get_rep_act(self, key):
+        request = f"""
+                SELECT
+                    repetitive_actions.name,
+                    repetitive_actions.frequency,
+                    repetitive_actions.active,
+                    repetitive_actions.script
+                FROM
+                    repetitive_actions
+                WHERE
+                    repetitive_actions.map = "{MDApp.get_running_app().current_map}"
+                    AND repetitive_actions.key = "{key}"
+                """
+
+        self.cur.execute(request)
+
+        return self.cur.fetchone()
 
 
 db = Database()

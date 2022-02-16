@@ -5,13 +5,14 @@ from kivy.clock import Clock
 from kivy.uix.gridlayout import GridLayout
 from kivy_garden.draggable import KXDraggableBehavior, KXReorderableBehavior
 import asynckivy as ak
-from kivymd.uix.list import OneLineAvatarListItem
-
+from kivymd.uix.list import OneLineAvatarIconListItem
 
 from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.button import MDRectangleFlatIconButton
 from kivymd.app import MDApp
 
 from db_requests import db
+from rep_act_element_form import RepActElementForm
 
 
 class Magnet(Factory.Widget):
@@ -64,27 +65,49 @@ Builder.load_string("""
     orientation: "vertical"
 
     MDBoxLayout:
+        spacing: dp(10)
 
-        ScrollView:
+        MDBoxLayout:
+            size_hint_x: .7
+            spacing: dp(20)
+            orientation: "vertical"
+        
+            ScrollView:
+                
+                ReorderableGridLayout:
+                    id: algorithm_actions
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: 10
+                    drag_classes: ['algorithm_actions', ]
+                    cols: 1
+                    
+            MDRectangleFlatButton:
+                text: "Добавить действие"
+        
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint_x: .3
             
-            ReorderableGridLayout:
-                id: algorithm_actions
-                size_hint_y: None
-                height: self.minimum_height
-                spacing: 10
-                padding: 10
-                drag_classes: ['algorithm_actions', ]
-                cols: 1
+            MDList:
+                id: repetitive_actions
+                
+            Widget:
+            
+            MDBoxLayout:
+                adaptive_height: True
+                
+                Widget:
+
+                MDRectangleFlatButton:
+                    text: "Добавить"
+                    on_release: root.add_new_rep_act()
+            
 
     MDBoxLayout:
         adaptive_height: True
-        padding: dp(20), 0
         spacing: dp(20)
-        
-        MDRectangleFlatButton:
-            text: "Добавить действие"
-            on_release: root.change_activity()
-        
+ 
         Widget:
         
         MDRectangleFlatButton:
@@ -94,6 +117,7 @@ Builder.load_string("""
         MDRectangleFlatButton:
             text: "Остановить"
             on_release: root.stop()
+        
                   
 <ActionRow>:
     do_anim: not self.is_being_dragged
@@ -121,13 +145,25 @@ Builder.load_string("""
             on_release: root.start_stop(self)
             
             
-            
-
 <ReorderableGridLayout>:
     # spacer_widgets:
     #     [create_spacer(color=color)
     #     for color in "#000044 #002200 #440000".split()]
+    
+    
+<RepAct>:
+    text: root.key
         
+    LeftCheckbox:
+    
+    IconRightWidget:
+        icon: "close"
+        user_font_size: dp(15)
+        pos_hint: {'center_y': .5}
+
+
+<LeftCheckbox@ILeftBodyTouch+MDCheckbox>:
+      
 """)
 
 
@@ -166,6 +202,8 @@ class Algorithm(MDBoxLayout):
         for i in range(23):
             algorithm_actions.add_widget(ActionRow(text=str(i)))
 
+        self.refresh_rep_acts()
+
     @staticmethod
     def change_activity():
         app = MDApp.get_running_app()
@@ -185,6 +223,40 @@ class Algorithm(MDBoxLayout):
     def add_action(self):
         pass
 
+    def add_new_rep_act(self):
+        rep_act_form = RepActElementForm()
+        rep_act_form.key = None
+        rep_act_form.open()
+        pass
 
+    def refresh_rep_acts(self):
+        self.ids.repetitive_actions.clear_widgets()
+
+        for rep_act in db.get_rep_acts():
+            self.ids.repetitive_actions.add_widget(RepAct(
+                key=rep_act['key'],
+                name=rep_act['name'],
+                frequency=rep_act['frequency'],
+                active=rep_act['active']
+                )
+            )
+
+
+class RepAct(OneLineAvatarIconListItem):
+    key = StringProperty("")
+    name = StringProperty("")
+    frequency = NumericProperty(0)
+    active = BooleanProperty(False)
+
+    def __init__(self, **kwargs):
+        # for key, val in kwargs.items():
+        #     self.__dict__[key] = val
+
+        self.key = kwargs['key']
+        self.name = kwargs['name']
+        self.frequency = kwargs['frequency']
+        self.active = kwargs['active']
+
+        super(RepAct, self).__init__()
 
 
